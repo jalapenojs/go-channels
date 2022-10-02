@@ -1,24 +1,26 @@
 {
-  "name": "js-go-channels",
-  "version": "0.0.31",
+  "name": "@jalapeñojs/go-channels",
+  "version": "0.0.33",
   "description": "Golang channels for JS",
   "homepage": "https://github.com/frankandrobot/js-go-channels",
   "repository": "frankandrobot/js-go-channels",
-  "main": "dist/legacy/index.js",
+  "main": "dist/index.js",
+  "types:": "dist/index.d.ts",
   "module": "src/index.js",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
     "test": "vitest",
-    "clean": "rimraf dist && mkdirp dist/legacy && mkdirp dist/legacy-umd",
-    "build:legacy": "BABEL_ENV=legacy babel src --source-maps --no-comments --out-dir dist/legacy/",
-    "build:legacy-umd": "rollup --config",
-    "build": "npm run clean && run-p build:**",
-    "prerelease": "npm run doc:src && npm run doc:api && npm run dist && git add doc dist && git commit -m \"[dist]\"",
+    "clean": "rimraf dist",
+    "build": "clean && tsc",
+    "prerelease": "git add dist && git commit -m \"[dist]\"",
     "release:major": "npm version major && git push --follow-tags",
     "release:minor": "npm version minor && git push --follow-tags",
     "release:patch": "npm version patch && git push --follow-tags"
   },
   "author": "U Avalos <me@frankandrobot.com>",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "devDependencies": {
     "acorn-jsx": "5.3.2",
     "babel-cli": "^6.26.0",
