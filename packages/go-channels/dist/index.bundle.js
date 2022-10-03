@@ -1,4 +1,23 @@
-var __rest = (this && this.__rest) || function (s, e) {
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __rest(s, e) {
     var t = {};
     for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
         t[p] = s[p];
@@ -8,10 +27,61 @@ var __rest = (this && this.__rest) || function (s, e) {
                 t[p[i]] = s[p[i]];
         }
     return t;
-};
-import { LinkedListBuffer, uuid, checkGenerator } from "./utils";
+}
+
+class BufferItem {
+    constructor(data, next) {
+        this.data = data;
+        this.next = next;
+    }
+}
+class LinkedListBuffer {
+    constructor() {
+        this.head = undefined;
+        this.tail = undefined;
+    }
+    add(item) {
+        const bufferItem = new BufferItem(item);
+        // first item ever
+        if (!this.head) {
+            this.head = bufferItem;
+            this.tail = bufferItem;
+            return;
+        }
+        if (this.tail)
+            this.tail.next = bufferItem;
+    }
+    pop() {
+        if (!this.head)
+            return undefined;
+        const item = this.head;
+        this.head = this.head.next;
+        return item.data;
+    }
+}
+let id = 0;
+function uuid() {
+    // Note that we're not using generators to avoid having generators
+    // as a library dependency.
+    return id++;
+}
+/**
+ * This is really for JS users. Not needed for Ts.
+ */
+function checkGenerator(generator) {
+    // check if generator
+    if (!generator || typeof generator !== "function") {
+        throw new Error("Need a generator");
+    }
+    const iterator = generator();
+    if (!iterator || typeof iterator[Symbol.iterator] !== "function") {
+        throw new Error("Need an iterator");
+    }
+    return iterator;
+}
+
 const tag = "[js-go-channels]";
-export const initialStateFn = () => ({
+const initialStateFn = () => ({
     channels: {},
     dataProducers: {},
     dataConsumers: {},
@@ -223,12 +293,9 @@ function scheduler({ state: { dataProducers, dataConsumers, channels, lastSelect
                 return;
             }
             return nextTick(iterator);
-        default: {
-            const x = requestType;
-        }
     }
 }
-export function go(generator) {
+function go(generator) {
     const iterator = checkGenerator(generator);
     iterator.__goId = uuid();
     // so `go` kicks off the scheduler
@@ -241,7 +308,7 @@ export function go(generator) {
         },
     });
 }
-export function newChannel() {
+function newChannel() {
     const { channels, dataProducers, dataConsumers } = state;
     const chanId = uuid();
     channels[chanId] = true;
@@ -287,7 +354,7 @@ export function newChannel() {
 /**
  * Kill the channel
  */
-export function close(channel) {
+function close(channel) {
     const { channels, dataProducers, dataConsumers } = state;
     const chanId = channel._id;
     console.debug(tag, `channel: ${chanId}`, "closing");
@@ -338,7 +405,7 @@ export function close(channel) {
 /**
  * Allows you to yield for the values of the selected channels.
  */
-export function select(...channels) {
+function select(...channels) {
     return {
         type: "select",
         payload: { selectedChanIds: channels.map((x) => x._id) || [] },
@@ -347,7 +414,7 @@ export function select(...channels) {
 /**
  * forEach will be called each time someone `put`s to the Channel.
  */
-export function range(channel) {
+function range(channel) {
     return {
         // This actually registers the callback
         forEach(callback) {
@@ -383,4 +450,12 @@ export function range(channel) {
         },
     };
 }
-export { LinkedListBuffer, checkGenerator };
+
+exports.LinkedListBuffer = LinkedListBuffer;
+exports.checkGenerator = checkGenerator;
+exports.close = close;
+exports.go = go;
+exports.initialStateFn = initialStateFn;
+exports.newChannel = newChannel;
+exports.range = range;
+exports.select = select;
