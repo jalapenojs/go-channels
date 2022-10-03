@@ -3,7 +3,8 @@
     "strict": true,
     "target": "ES6",
     "declaration": true,
-    "moduleResolution": "NodeNext",
+    "module": "ES6",
+    "moduleResolution": "Node",
     "noUncheckedIndexedAccess": true
   }
 }
