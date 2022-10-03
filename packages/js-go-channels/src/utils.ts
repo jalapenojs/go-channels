@@ -45,7 +45,10 @@ export function uuid() {
   return id++;
 }
 
-export function checkGenerator(generator) {
+/**
+ * This is really for JS users. Not needed for Ts.
+ */
+export function checkGenerator(generator: any) {
   // check if generator
   if (!generator || typeof generator !== "function") {
     throw new Error("Need a generator");
