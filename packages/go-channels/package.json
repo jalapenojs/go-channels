@@ -4,16 +4,17 @@
   "description": "Golang channels for JS",
   "homepage": "https://github.com/jalapenojs/go-channels",
   "repository": "jalapenojs/go-channels",
-  "main": "dist/index.js",
-  "types:": "dist/index.d.ts",
-  "module": "src/index.js",
+  "main": "dist/index.bundle.js",
+  "types:": "dist/src/index.d.ts",
+  "module": "src/index.bundle.js",
   "files": [
     "/dist"
   ],
   "scripts": {
     "test": "vitest",
-    "clean": "rimraf dist",
-    "build": "yarn clean && yarn tsc",
+    "build:clean": "rimraf dist",
+    "build:rollup": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "build": "yarn build:clean && yarn build:rollup",
     "prerelease": "git add dist && git commit -m \"[dist]\"",
     "release:major": "npm version major && git push --follow-tags",
     "release:minor": "npm version minor && git push --follow-tags",
@@ -30,6 +31,8 @@
     "vitest": "0.23.4"
   },
   "dependencies": {
-    "babel-runtime": "^6.26.0"
+    "@rollup/plugin-typescript": "^8.5.0",
+    "babel-runtime": "^6.26.0",
+    "rollup": "^2.79.1"
   }
 }
