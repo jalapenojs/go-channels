@@ -5,7 +5,7 @@
   "description": "Master project for @jalapenojs/go-channels",
   "homepage": "https://github.com/jalapenojs/go-channels",
   "repository": "jalapenojs/go-channels",
-  "author": "U Avalos <uri@frankandrobot.com>",
+  "author": "U Avalos <me@frankandrobot.com>",
   "license": "MIT",
   "scripts": {
     "readme": "cp README.md packages/js-go-channels/README.md",
