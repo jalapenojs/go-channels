@@ -5,6 +5,7 @@
     "declaration": true,
     "declarationDir": "./dist",
     "emitDeclarationOnly": true,
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "rootDir": "src/"
   }
 }

@@ -4,7 +4,7 @@
   "description": "Golang channels for JS",
   "homepage": "https://github.com/jalapenojs/go-channels",
   "repository": "jalapenojs/go-channels",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "types:": "dist/src/index.d.ts",
   "files": [
     "/dist"
