@@ -1,4 +1,4 @@
-import { newChannel, go, select, close, range } from "./index";
+import { newChannel, go, select, close, range } from "./main";
 
 const tick = async (timeoutCounts = 5) => {
   for (let i = 0; i < timeoutCounts; i++) {
