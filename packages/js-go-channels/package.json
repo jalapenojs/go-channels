@@ -1,0 +1,48 @@
+{
+  "name": "js-go-channels",
+  "version": "0.0.31",
+  "description": "Golang channels for JS",
+  "homepage": "https://github.com/frankandrobot/js-go-channels",
+  "repository": "frankandrobot/js-go-channels",
+  "main": "dist/legacy/index.js",
+  "module": "src/index.js",
+  "scripts": {
+    "test": "tape -r ./babeltest.config 'tests/**/*.js' | tap-notify | tap-diff",
+    "test:simple": "tape -r ./babeltest.config -r babel-polyfill 'tests/**/*.js'",
+    "clean": "rimraf dist && mkdirp dist/legacy && mkdirp dist/legacy-umd",
+    "build:legacy": "BABEL_ENV=legacy babel src --source-maps --no-comments --out-dir dist/legacy/",
+    "build:legacy-umd": "rollup --config",
+    "build": "npm run clean && run-p build:**",
+    "prerelease": "npm run doc:src && npm run doc:api && npm run dist && git add doc dist && git commit -m \"[dist]\"",
+    "release:major": "npm version major && git push --follow-tags",
+    "release:minor": "npm version minor && git push --follow-tags",
+    "release:patch": "npm version patch && git push --follow-tags"
+  },
+  "author": "U Avalos <me@frankandrobot.com>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "6.26.3",
+    "babel-eslint": "10.1.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "1.7.0",
+    "eslint": "8.23.0",
+    "mkdirp": "1.0.4",
+    "npm-run-all": "^4.1.1",
+    "prettier": "2.7.1",
+    "rimraf": "^2.6.2",
+    "rollup": "2.79.0",
+    "rollup-plugin-babel": "4.4.0",
+    "rollup-plugin-commonjs": "10.1.0",
+    "rollup-plugin-node-resolve": "5.2.0",
+    "rollup-plugin-sourcemaps": "0.6.3",
+    "tap-diff": "^0.1.1",
+    "tap-notify": "^1.0.0",
+    "tape": "5.6.0",
+    "timed-tape": "^0.1.1",
+    "typescript": "4.8.2"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.26.0"
+  }
+}
