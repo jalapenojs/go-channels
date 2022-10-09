@@ -1,6 +1,6 @@
 {
   "name": "@jalapenojs/go-channels",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "Golang channels for JS",
   "homepage": "https://github.com/jalapenojs/go-channels",
   "repository": "jalapenojs/go-channels",
