@@ -1,6 +1,6 @@
 {
   "name": "@jalapenojs/go-channels",
-  "version": "0.0.37",
+  "version": "0.0.38",
   "description": "Golang channels for JS",
   "homepage": "https://github.com/jalapenojs/go-channels",
   "repository": "jalapenojs/go-channels",
@@ -22,14 +22,13 @@
   "author": "U Avalos <me@frankandrobot.com>",
   "license": "MIT",
   "devDependencies": {
+    "@rollup/plugin-typescript": "^8.5.0",
     "eslint": "8.23.0",
     "mkdirp": "1.0.4",
     "prettier": "2.7.1",
     "rimraf": "^2.6.2",
+    "rollup": "^2.79.1",
     "typescript": "4.8.2",
-    "vitest": "0.23.4",
-    "@rollup/plugin-typescript": "^8.5.0",
-    "rollup": "^2.79.1"
-  },
-  "dependencies": {}
+    "vitest": "0.23.4"
+  }
 }
