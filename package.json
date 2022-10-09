@@ -11,7 +11,7 @@
     "readme": "cp README.md packages/js-go-channels/README.md",
     "bootstrap": "lerna bootstrap",
     "prepublish": "yarn run readme",
-    "publish:all": "yearn lerna publish --no-private",
+    "publish:all": "yarn lerna publish --no-private",
     "release:major": "npm version major && git push --follow-tags",
     "release:minor": "npm version minor && git push --follow-tags",
     "release:patch": "npm version patch && git push --follow-tags"

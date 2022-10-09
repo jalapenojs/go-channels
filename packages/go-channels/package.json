@@ -6,7 +6,6 @@
   "repository": "jalapenojs/go-channels",
   "main": "dist/index.bundle.js",
   "types:": "dist/src/index.d.ts",
-  "module": "src/index.bundle.js",
   "files": [
     "/dist"
   ],
@@ -14,7 +13,7 @@
     "test": "vitest",
     "build:clean": "rimraf dist",
     "build:rollup": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
-    "build": "yarn build:clean && yarn build:rollup",
+    "build": "yarn build:clean && yarn build:rollup && yarn tsc",
     "prerelease": "git add dist && git commit -m \"[dist]\"",
     "release:major": "npm version major && git push --follow-tags",
     "release:minor": "npm version minor && git push --follow-tags",
@@ -28,12 +27,9 @@
     "prettier": "2.7.1",
     "rimraf": "^2.6.2",
     "typescript": "4.8.2",
-    "vitest": "0.23.4"
-  },
-  "dependencies": {
+    "vitest": "0.23.4",
     "@rollup/plugin-typescript": "^8.5.0",
-    "babel-runtime": "^6.26.0",
     "rollup": "^2.79.1"
   },
-  "private": "false"
+  "dependencies": {}
 }
