@@ -4,10 +4,14 @@ import typescript from "@rollup/plugin-typescript";
 const config: RollupOptions = {
   input: "src/index.ts",
   output: {
-    file: "dist/index.bundle.js",
+    dir: "dist",
     format: "cjs",
   },
-  plugins: [typescript()],
+  plugins: [
+    typescript({
+      tsconfig: "tsconfig.types.json",
+    }),
+  ],
 };
 
 export default config;

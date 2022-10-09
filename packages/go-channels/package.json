@@ -4,7 +4,7 @@
   "description": "Golang channels for JS",
   "homepage": "https://github.com/jalapenojs/go-channels",
   "repository": "jalapenojs/go-channels",
-  "main": "dist/index.bundle.js",
+  "main": "dist/index.js",
   "types:": "dist/src/index.d.ts",
   "files": [
     "/dist"
@@ -13,7 +13,7 @@
     "test": "vitest",
     "build:clean": "rimraf dist",
     "build:rollup": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
-    "build": "yarn build:clean && yarn build:rollup && yarn tsc",
+    "build": "yarn build:clean && yarn build:rollup",
     "prerelease": "git add dist && git commit -m \"[dist]\"",
     "release:major": "npm version major && git push --follow-tags",
     "release:minor": "npm version minor && git push --follow-tags",
