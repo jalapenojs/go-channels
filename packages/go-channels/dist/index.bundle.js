@@ -451,11 +451,8 @@ function range(channel) {
     };
 }
 
-exports.LinkedListBuffer = LinkedListBuffer;
-exports.checkGenerator = checkGenerator;
 exports.close = close;
 exports.go = go;
-exports.initialStateFn = initialStateFn;
 exports.newChannel = newChannel;
 exports.range = range;
 exports.select = select;

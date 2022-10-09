@@ -8,7 +8,7 @@
   "author": "U Avalos <me@frankandrobot.com>",
   "license": "MIT",
   "scripts": {
-    "readme": "cp README.md packages/js-go-channels/README.md",
+    "readme": "cp README.md packages/go-channels/README.md",
     "bootstrap": "lerna bootstrap",
     "prepublish": "yarn run readme",
     "publish:all": "yarn lerna publish --no-private",
