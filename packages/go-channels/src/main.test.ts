@@ -257,12 +257,11 @@ test("closing twice throws an error", async () => {
       yield close(chan);
     } catch (e) {
       err = e as Error;
-    } finally {
-      expect(err?.message).toMatch(/channel already closed/i);
     }
   });
 
   await tick();
+  expect(err?.message).toMatch(/channel already closed/i);
 });
 
 test("putting on a closed channel throws an error", async () => {
@@ -277,12 +276,11 @@ test("putting on a closed channel throws an error", async () => {
       yield chan.put("something");
     } catch (e) {
       err = e as Error;
-    } finally {
-      expect(err?.message).toMatch(/Cannot put on a closed channel/i);
     }
   });
 
   await tick();
+  expect(err?.message).toMatch(/Cannot put on a closed channel/i);
 });
 
 test("async putting on a closed channel throws error", async () => {
@@ -297,20 +295,26 @@ test("async putting on a closed channel throws error", async () => {
       chan.asyncPut("something");
     } catch (e) {
       err = e as Error;
-    } finally {
-      expect(err?.message).toMatch(/Cannot put on a closed channel/i);
     }
   });
 
   await tick();
+  expect(err?.message).toMatch(/Cannot put on a closed channel/i);
 });
 
 test("async putting before channel closed is fine", async () => {
   expect.assertions(1);
   const chan = newChannel();
-  expect(() => chan.asyncPut("something")).not.toThrowError(/closed channel/i);
-  close(chan);
+  let err: Error | undefined;
+
+  try {
+    chan.asyncPut("something");
+    close(chan);
+  } catch (e) {
+    err = e as Error;
+  }
   await tick();
+  expect(err?.message).toBeUndefined;
 });
 
 test("close works with select", async () => {

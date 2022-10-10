@@ -80,7 +80,6 @@ function checkGenerator(generator) {
     return iterator;
 }
 
-const tag = "[js-go-channels]";
 const initialStateFn = () => ({
     channels: {},
     dataProducers: {},
@@ -129,10 +128,10 @@ function scheduler({ state: { dataProducers, dataConsumers, channels, lastSelect
     // TODO any
     iteratorMessage) => {
         const { value: yieldRequest, done: stopScheduler } = iterator.next(iteratorMessage);
-        console.debug(tag, `go: ${iterator.__goId}`, "message received", {
-            yieldRequest,
-            stopScheduler,
-        });
+        // console.debug(tag, `go: ${iterator.__goId}`, "message received", {
+        //   yieldRequest,
+        //   stopScheduler,
+        // });
         setTimeout(() => scheduler({
             state: { dataProducers, dataConsumers, channels, lastSelected },
             generator: {
@@ -157,12 +156,12 @@ function scheduler({ state: { dataProducers, dataConsumers, channels, lastSelect
     };
     // if no yield request, then at start of generator, so get one
     if (!yieldRequest && !stopScheduler) {
-        console.debug(tag, `go: ${iterator.__goId}`, "asking for first message");
+        //  console.debug(tag, `go: ${iterator.__goId}`, "asking for first message");
         return nextTick(iterator);
     }
     // if this generator is done, then goodbye
     if (stopScheduler || !yieldRequest) {
-        console.debug(tag, `go: ${iterator.__goId}`, "stopping scheduler");
+        //  console.debug(tag, `go: ${iterator.__goId}`, "stopping scheduler");
         return;
     }
     const { type: requestType, chanId, payload } = yieldRequest;
@@ -357,9 +356,9 @@ function newChannel() {
 function close(channel) {
     const { channels, dataProducers, dataConsumers } = state;
     const chanId = channel._id;
-    console.debug(tag, `channel: ${chanId}`, "closing");
+    // console.debug(tag, `channel: ${chanId}`, "closing");
     if (!channels[chanId]) {
-        console.debug(tag, `channel: ${chanId}`, "aborting close");
+        // console.debug(tag, `channel: ${chanId}`, "aborting close");
         throw closeError;
     }
     // turn off channel

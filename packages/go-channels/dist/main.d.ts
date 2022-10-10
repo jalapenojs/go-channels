@@ -1,4 +1,4 @@
-import { LinkedListBuffer, checkGenerator } from "./utils";
+import { LinkedListBuffer } from "./utils";
 interface ChannelTakeRequest {
     chanId: string;
     type: "take";
@@ -103,4 +103,4 @@ export declare function select<Data1, Data2, Data3, Data4, Data5>(...channel: [
 export declare function range<Data>(channel: Channel<Data>): {
     forEach(callback: (value: Data) => boolean | void): void;
 };
-export { LinkedListBuffer, checkGenerator };
+export {};
