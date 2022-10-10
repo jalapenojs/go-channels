@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@jalapenojs/root",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Master project for @jalapenojs/go-channels",
   "homepage": "https://github.com/jalapenojs/go-channels",
   "repository": "jalapenojs/go-channels",
