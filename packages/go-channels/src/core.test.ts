@@ -1,14 +1,10 @@
-import { newChannel, go, select, close, range } from "./main";
+import { newChannel, go, select, close, range } from "./core";
 
 const tick = async (timeoutCounts = 5) => {
   for (let i = 0; i < timeoutCounts; i++) {
     await new Promise((resolve) => setTimeout(resolve));
   }
 };
-
-beforeAll(() => {
-  // console.debug = vitest.fn();
-});
 
 test("go needs a generator", () => {
   // @ts-ignore
@@ -251,10 +247,26 @@ test("closing twice throws an error", async () => {
   const chan = newChannel();
   let err: Error | undefined;
 
+  try {
+    close(chan);
+    close(chan);
+  } catch (e) {
+    err = e as Error;
+  }
+
+  await tick();
+  expect(err?.message).toMatch(/channel already closed/i);
+});
+
+test("closing twice inside a subroutine throws an error", async () => {
+  expect.assertions(1);
+  const chan = newChannel();
+  let err: Error | undefined;
+
   go(function* () {
     try {
-      yield close(chan);
-      yield close(chan);
+      close(chan);
+      close(chan);
     } catch (e) {
       err = e as Error;
     }

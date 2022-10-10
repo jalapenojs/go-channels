@@ -20,17 +20,10 @@ interface ChannelSelectRequest {
   };
 }
 
-interface ChannelCloseRequest {
-  chanId: string;
-  type: "close";
-  payload: undefined;
-}
-
 type ChannelYieldRequest<Data> =
   | ChannelTakeRequest
   | ChannelPutRequest<Data>
-  | ChannelSelectRequest
-  | ChannelCloseRequest;
+  | ChannelSelectRequest;
 
 interface Channel<Data> {
   readonly _id: string;
@@ -48,7 +41,7 @@ interface Channel<Data> {
 type GoNextGenerator<Data> = IteratorResult<Data, Data>;
 
 type GoGenerator<Data> = Generator<
-  ChannelYieldRequest<Data> | void, // yield result
+  ChannelYieldRequest<Data>, // yield result
   void, // return type
   any // TODO next arguments
 > & { __goId?: string };
@@ -388,13 +381,6 @@ function scheduler<Data>({
       return;
     }
 
-    case "close":
-      if (!channels[chanId]) {
-        nextTickThrow(iterator, closeError);
-        return;
-      }
-      return nextTick(iterator);
-
     default: {
       const x: never = requestType;
     }
@@ -465,9 +451,7 @@ export function newChannel<Data = string>() {
 /**
  * Kill the channel
  */
-export function close<Data>(
-  channel: Channel<Data>
-): ChannelCloseRequest | void {
+export function close<Data>(channel: Channel<Data>): void {
   const { channels, dataProducers, dataConsumers } = state;
   const chanId = channel._id;
 
@@ -523,12 +507,6 @@ export function close<Data>(
   }
 
   delete dataProducers[chanId];
-
-  return {
-    chanId,
-    type: "close",
-    payload: undefined,
-  };
 }
 
 interface Selection {
