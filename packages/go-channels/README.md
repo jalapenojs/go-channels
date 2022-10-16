@@ -1,70 +1,68 @@
-# js-go-channels
+# @jalapenojs/go-channels
+
+@jalapenojs/go-channels is a library for handling asynchronous messages using
+`channels`, which are message queues. See below for more details.
 
 ## Installation
 
-``` bash
-npm install js-go-channels
+```bash
+yarn add @jalapenojs/go-channels
 ```
 
-## Usage
-If you want to try out js-go-channels, check
-out [this REPL](https://repl.it/LooH/25).
+## Basic Usage
 
-### Generators, oh my!
-Your app will need to
-support
-[generators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators) to
-use this library. Node.js >= 6 supports this out of the box. Modern
-desktop browsers as well. However, if you need to support mobile,
-legacy browsers, or legacy Node.js, then you'll need to
-use [Babel](https://babeljs.io/) to transpile your code. Please see
-the [appendix](#appendix).
+```typescript
+import { close, go, newChannel } from "@jalapenojs/go-channels";
 
-## Examples
-### Basic Usage
-
-```javascript
-import {go, newChannel, close, select, range} from 'js-go-channels';
-
+// create a channel
 const ch = newChannel();
 
-go(function*() {
-  yield ch.put('hello');
+go(function* () {
+  // put messages into the channel, which is an infinite queue
+  yield ch.put("hello");
+  yield ch.put("world");
+
+  // close the channel
   close(ch);
-  // this will throw an error because you can't put on a closed
-  // channel
-  yield ch.put('world');
 });
 
-go(function*() {
-  const msg1 = yield ch.take();
-  console.log(msg1); // {value: hello, done: false}
-  const msg2 = yield ch.take();
-  console.log(msg2); // {value: undefined, done: true}
-  const msg3 = yield ch.take();
-  console.log(msg3); // {value: undefined, done: true}
+go<typeof ch>(function* () {
+  while (true) {
+    const msg = yield ch.take();
+    if (msg.done) break;
+    console.log(msg.value);
+  }
+  // outputs:
+  // "hello"
+  // "world"
 });
 ```
+
+See
+[CodeSandbox](https://codesandbox.io/s/jalepenojs-go-channels-5wh0d0?file=/src/basic-usage.ts)
 
 ### Select
 
-```javascript
-import {go, newChannel, close, select, range} from 'js-go-channels';
+```typescript
+import { go, newChannel, select, InferResult } from "@jalapenojs/go-channels";
 
 const ch1 = newChannel();
 const ch2 = newChannel();
 
-go(function*() {
-  yield ch1.put('hello');
+go(function* () {
+  yield ch1.put("hello");
 });
 
-go(function*() {
-  yield ch2.put('world');
+go(function* () {
+  yield ch2.put("world");
 });
 
-go(function*() {
-  for(;;) {
-    const [msg1, msg2] = yield select(ch1, ch2);
+type C1 = InferResult<typeof ch1>;
+type C2 = InferResult<typeof ch2>;
+
+go(function* () {
+  while (true) {
+    const [msg1, msg2]: [C1, C2] = yield select(ch1, ch2);
     if (msg1) {
       console.log(msg1); //`{value: hello, done: false}
     }
@@ -73,157 +71,182 @@ go(function*() {
     }
   }
 });
-
-
 ```
+
+See
+[CodeSandbox](https://codesandbox.io/s/jalepenojs-go-channels-5wh0d0?file=/src/select.ts)
 
 ### Range
 
-``` javascript
-import {go, newChannel, close, select, range} from 'js-go-channels';
+```typescript
+import { go, newChannel, range } from "@jalapenojs/go-channels";
 
-const ch = newChannel();
+const ch = newChannel<number>();
 
-go(function*() {
-  for(let i=0; i<10; i++) {
+go(function* () {
+  for (let i = 1; i < 10; i++) {
     yield ch.put(i);
   }
 });
 
-range(ch)
-  .forEach(msg => {
-    console.log(msg);
-    if (msg === 5) {
-      // return false to stop receiving messages
-      return false
-    }
-  });
+range(ch).forEach((msg) => {
+  console.log(msg);
+  if (msg === 5) {
+    // return false to stop receiving messages
+    return false;
+  }
+});
 
 // output: 1,2,3,4,5
 ```
 
+See
+[CodeSandbox](https://codesandbox.io/s/jalepenojs-go-channels-5wh0d0?file=/src/range.ts:0-344)
+
+## Overview
+
+### What
+
+As stated in the introduction, @jalapenojs/go-channels is a library for handling
+asynchronous messages.However, unlike browser events, two key differences are:
+
+1. Subscribers are automatically unregistered after the first event.
+2. Messages are sent to subscribers in a round-robbing fashion, based on
+   registration order.
+
+```typescript
+const ch = newChannel<number>();
+
+go<typeof ch>(function* subscriber1() {
+  while (true) console.log(yield ch.take()); //0, 2, 4, 6, 8, ...
+});
+
+go<typeof ch>(function* subscriber2() {
+  while (true) console.log(yield ch.take()); //1, 3, 5, 7, ...
+});
+
+go(function* producer() {
+  let len = 0;
+  while (true) yield ch.put(len++);
+});
+```
+
+See
+[CodeSandbox](https://codesandbox.io/s/jalepenojs-go-channels-5wh0d0?file=/src/round-robbin.ts)
+
+### Why
+
+The inspiration comes from [redux-saga](https://redux-saga.js.org/) and
+[GoLang Channels](https://golangdocs.com/channels-in-golang)
+
+Basically, if I'm not mistaken, GoLang Channels are +30 year technology for
+concurrency that provides a simpler mental model than standard concurrency
+patterns. See
+[the Wikipedia Article](<https://en.wikipedia.org/wiki/Go_(programming_language)#Concurrency:_goroutines_and_channels>)
+for more details.
+
 ## Redux Integration
 
-Use
-[redux-thunk](https://github.com/gaearon/redux-thunk),
-[redux-saga](https://redux-saga.js.org/),
-or
-[redux-go-workflows](https://github.com/frankandrobot/js-go-channels/packages/redux-go-workflows/README.md).
+Use:
 
-## Gotchas
+- [redux-thunk](https://github.com/gaearon/redux-thunk)
+- [redux-saga](https://redux-saga.js.org/), or
+- redux-go-workflows (TBD)
 
-### Javascript doesn't have multi-return types
+## React Integration
 
-In go, you can write the following
+Coming soon!
 
-``` go
-ch := make(chan string)
-go func() {
-	val := <-ch
-	val, more := <- ch
-}()
+## Gotchas and Limitations
 
-```
+In no particular order:
 
-JS is a saner language in this regard (words I never thought I would
-write). Instead `js-go-channel` channels return objects of type
-`{value, done}`. You can use destructuring and renaming to get the
-same result.
+### No deadlock-detection support 😢
 
-```javascript
-const ch = newChannel()
-go(function*() {
-  const {value: msg1} = yield ch.take() //ignore done
-  console.log(msg1)
-  const {value: msg2, done} = yield ch.take()
-  if (!done) {
-    console.log(msg2)
-  }
-})
-
-```
+GoLang tells you when there is
+[deadlock](https://en.wikipedia.org/wiki/Deadlock). That would be really cool to
+add but I'm not even sure if it's possible.
 
 ### You can't `yield` inside a callback
 
-Can you spot the bug?
+Fortunately, the following will _not_ compile:
 
-```javascript
+```typescript
 const elem = //... some DOM element
 const ch = newChannel()
 elem.addEventListener('mouseup', function() {
-  yield ch.put('mouseup')
+  yield ch.put('mouseup'); // compile error
 });
 ```
 
-If you're using Babel, the above code won't even compile. Instead you
-should use an async version of `put` (which can be a good idea since
-blocking UI events doesn't really make sense). Under the hood,
-`asyncPut` uses an infinite buffer.
+Instead you should use an async version of `put` (which can be a good idea since
+blocking UI events doesn't really make sense).
 
-```javascript
-elem.addEventListener('mouseup', function() {
-  ch.asyncPut('mouseup') // this works!
+```typescript
+elem.addEventListener("mouseup", function () {
+  ch.asyncPut("mouseup"); // this works!
 });
-
 ```
 
-### The common golang synchronization pattern won't work.
+### This common golang synchronization pattern won't work.
 
-```javascript
-func main() {
-  const messages = newChannel()
-  go(function* () { yield messages.put("ping") })
-  const {value: msg} = messages.take()
-  console.log(msg)
-}
-```
-
-The reason has to do with the way Javascript concurrency
-works. Recall, it works by dispatching functions to an async
-queue. Whatever function is currently executing will hog the CPU.
-That means the `take` will always synchronously fire before the `put`,
-and to make it block we have to use a callback.
-
-So the following will work just fine. And by "fine", we mean that
-`main` won't finish until it receives a "ping".
-
-```javascript
-func main() {
-  const messages = newChannel()
-  go(function* () { yield messages.put("ping") })
+```typescript
+function main() {
+  const messages = newChannel();
   go(function* () {
-    const {value: msg} = yield messages.take() 
-    console.log(msg)
-  })
+    yield messages.put("ping");
+  });
+  // The desired behavior is to stop execution until a message
+  // is received and exit *after* the ping
+  const { value: msg } = messages.take();
+  console.log(msg);
+  // unfortunately, this never prints ping and
+  // always exits immediately 😞
 }
+```
 
+The reason is because Javascript is synchronous. (And also because you have to
+`yield` the `take` inside a generator for it to have an effect.)
+
+However, the following will work just fine. And by "fine", we mean that even
+though `main` finishes before the generators execute, the generators will still
+print out the ping.
+
+```typescript
+function main() {
+  const messages = newChannel();
+  go(function* () {
+    yield messages.put("ping");
+  });
+  go<typeof messages>(function* () {
+    const { value: msg } = yield messages.take();
+    console.log(msg); // prints "ping"
+  });
+}
 ```
 
 ### Don't forget to `yield`
 
 Can you spot the bug?
 
-```javascript
-const output = newChannel()
-const input = newChannel()
-go(function* () { 
-  output.put("out")
-  const {value: msg} = yield input.take()
-})
-``` 
+```typescript
+const output = newChannel();
+const input = newChannel();
+go(function* () {
+  output.put("out");
+  const { value: msg } = yield input.take();
+});
+```
 
-To make `put`/`take` work, you need to `yield` inside of a "go"
-routine. As is, this code will run but *silently fail*. Currently, the
-only workaround is to use types or write a custom eslint rule that
-aggressively checks for `take`/`put` usage.
+To make `put`/`take` work, you need to `yield` inside of a "go" routine. As is,
+this code will run but _silently fail_. Currently, the only workaround is to
+write a custom eslint rule that aggressively checks for `take`/`put` usage.
 
-### `for-of` loops don't (yet) support `range`
-In go, the code below is valid. That is, `range` converts a channel to
-an asynchronous iterator and then the `for` loop can iterate over
-it. In Javascript, `for-of` loops do not yet support asynchronous
-iterators. Instead we use a custom `forEach`.
+### No asynchronous generator support (coming soon!)
 
-``` go
+In go, the code below is valid.
+
+```go
 ch := make(chan int)
 go func() {
 	ch <- 0
@@ -231,58 +254,25 @@ go func() {
 	ch <- 1
 	close(ch)
 }()
-for x := range ch {
-	fmt.Println(x)
-}
-// output: 0, 1
 ```
 
-JS version:
+This library does not (yet) support asynchronous generators, and so you can do
+the following:
 
-``` js
-const ch = newChannel()
-go(function*() {
-  yield ch.put(0)
-  // recall we have to use asyncPut inside of a callback
-  setTimeout(() => ch.asyncPut(1), 1000) 
-})
-range(ch).forEach(x => {
-  console.log(x)
-})
+```typescript
+const ch = newChannel();
+go(function* () {
+  yield ch.put(0);
+  setTimeout(() => {
+    ch.asyncPut(1);
+    close(ch);
+  }, 1000);
+});
 ```
 
-## <a name="appendix"></a> Appendix
-### Legacy Browser support
-[babel-preset-env](https://github.com/babel/babel-preset-env) makes it
-super easy to support legacy browsers. The following shows a sample
-`.babelrc` that compiles for IE 11:
+## Roadmap
 
-``` json
-{
-  "legacy": {
-    "presets": [
-      [
-        "env",
-        {
-          "targets": {
-            "browsers": ["ie >= 11"]
-          },
-          "spec": true,
-          "modules": "commonJS",
-          "useBuiltIns": "usage"
-        }
-      ]
-    ],
-    "plugins": []
-  }
-}
-```
-
-You can then need to
-add [babel-polyfill](https://babeljs.io/docs/usage/polyfill/) as a
-dependency in the package.json. 
-
-That's it! (You then need to configure webpack or equivalent to use Babel.)
-
-*Note that babel-preset-env replaces the old babel-preset-es2015
-plugin.*
+- An eslint plugin for detect missing `yield`s.
+- `for-of` support for `range`.
+- asynchronous generator support
+- React support 🚀
