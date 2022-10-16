@@ -398,12 +398,8 @@ function scheduler<Data>({
   }
 }
 
-type InferData<DataOrChannel> = DataOrChannel extends Channel<infer Data>
-  ? Data
-  : DataOrChannel;
-
-export function go<DataOrChannel>(
-  generator: () => DataOrChannel extends Channel<infer Data>
+export function go<ThisChannel>(
+  generator: () => ThisChannel extends Channel<infer Data>
     ? GoGenerator<Data>
     : GoGenerator<any>
 ) {
