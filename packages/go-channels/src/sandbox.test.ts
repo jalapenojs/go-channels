@@ -6,7 +6,7 @@ const tick = async (timeoutCounts = 5) => {
   }
 };
 
-const msgFactory = <Data = string>(): Array<IteratorResult<Data, Data>> => [];
+const msgFactory = <Data = string>(): Array<IteratorResult<Data>> => [];
 
 describe("sandbox", () => {
   it("cannot yield on close", async () => {
@@ -24,13 +24,13 @@ describe("sandbox", () => {
     const ch = newChannel();
     const msg = msgFactory();
 
-    go<string>(function* () {
+    go(function* () {
       yield ch.put("hello");
       yield ch.put("world");
       close(ch);
     });
 
-    go<string>(function* () {
+    go<typeof ch>(function* () {
       const msg1 = yield ch.take();
       msg.push(msg1);
       const msg2 = yield ch.take();
@@ -53,15 +53,15 @@ describe("sandbox", () => {
     const ch2 = newChannel();
     const msg = msgFactory();
 
-    go<string>(function* () {
+    go(function* () {
       yield ch1.put("hello");
     });
 
-    go<string>(function* () {
+    go(function* () {
       yield ch2.put("world");
     });
 
-    go<undefined>(function* () {
+    go(function* () {
       type C1 = InferResult<typeof ch1>;
       type C2 = InferResult<typeof ch2>;
 
@@ -88,7 +88,7 @@ describe("sandbox", () => {
     const ch = newChannel<number>();
     const msg: number[] = [];
 
-    go<number>(function* () {
+    go(function* () {
       for (let i = 1; i < 10; i++) {
         yield ch.put(i);
       }
@@ -110,7 +110,7 @@ describe("sandbox", () => {
   it("range is iterable", () => {
     const ch = newChannel();
 
-    go<string>(function* () {
+    go(function* () {
       yield ch.put("hello");
       yield ch.put("world");
       yield ch.put("goodbye");

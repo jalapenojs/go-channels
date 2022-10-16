@@ -1,6 +1,6 @@
 import { LinkedListBuffer, uuid, checkGenerator } from "./utils";
 
-interface ChannelTakeRequest<Data> {
+interface ChannelTakeRequest {
   chanId: string;
   type: "take";
   payload: undefined;
@@ -21,66 +21,61 @@ interface ChannelSelectRequest {
 }
 
 type ChannelYieldRequest<Data> =
-  | ChannelTakeRequest<Data>
+  | ChannelTakeRequest
   | ChannelPutRequest<Data>
   | ChannelSelectRequest;
 
 interface Channel<Data> {
   readonly _id: string;
 
-  take(): ChannelTakeRequest<Data>;
+  take(): ChannelTakeRequest;
 
   put(msg: Data): ChannelPutRequest<Data>;
 
   asyncPut(msg: Data): void;
 }
 
+export type GoGenerator<Data> = Generator<
+  /**
+   * What the generator yields to the outside. To clarify, this payload will be
+   * available to the internal scheduler.
+   *
+   * Ex:
+   *
+   *     function* () {
+   *      yield (msg as ChannelYieldRequest<Data>);
+   *     }
+   */
+  ChannelYieldRequest<Data>,
+  /** What the generator returns when it ends. */
+  void,
+  /**
+   * What is yielded inside the generator, aka the yield result (called the
+   * IteratorResult by TS)
+   *
+   * Ex:
+   *
+   *     function* () {
+   *        const msg : IteratorResult<Data> = yield ch.take();
+   *     }
+   *
+   * Note:
+   *
+   * 1. Unfortunately, TS will ignore the Data type and always type this as
+   *    IteratorResult<any>. 🤷 This is a limitation of generators. See
+   *    https://tech.lalilo.com/redux-saga-and-typescript-doing-it-right
+   * 2. In order to get type safety that means you'll need to manually type these.
+   * 3. We handle the select case by explicitly returning any
+   */
+  Data extends Array<infer Any> ? any : IteratorResult<Data, undefined>
+> & { __goId?: string };
+
 export type InferResult<channel> = channel extends Channel<infer Data>
   ? IteratorResult<Data, Data>
   : never;
 
-export type GoGenerator<Data> = Generator<
-  /**
-   * What the generator yields to the outside.
-   * To clarify, this payload will be available to the internal scheduler.
-   *
-   * Ex:
-   *
-   * ```
-   * function* () {
-   *  const msg: ChannelYieldRequest<Data> = // ...
-   *  yield msg;
-   * }
-   * ```
-   */
-  ChannelYieldRequest<Data>,
-  /**
-   * What the generator returns when it ends.
-   */
-  void,
-  /**
-   * What is yielded inside the generator. Unfortunately,
-   * you'll need to manually type these using go GoYieldResult.
-   * This is a limitation of generators. See
-   * https://tech.lalilo.com/redux-saga-and-typescript-doing-it-right
-   *
-   * Ex:
-   *
-   * ```
-   * function* () {
-   *   // by default it's any
-   *   const x : any = yield;
-   *   const y : boolean = yield;
-   * }
-   * ```
-   */
-  Data extends undefined ? any : IteratorResult<Data, Data>
-> & { __goId?: string };
-
-/**
- * "consumers" are generators that "take"/"select" from the channel
- */
-type Consumer<Data> = (ChannelTakeRequest<Data> | ChannelSelectRequest) & {
+/** "consumers" are generators that "take"/"select" from the channel */
+type Consumer<Data> = (ChannelTakeRequest | ChannelSelectRequest) & {
   iterator: GoGenerator<Data>;
 };
 
@@ -88,9 +83,7 @@ interface Consumers<Data> {
   [key: string]: LinkedListBuffer<Consumer<Data>>;
 }
 
-/**
- * "producers" are generators that "put" into the channel.
- */
+/** "producers" are generators that "put" into the channel. */
 type Producer<Data> = ChannelPutRequest<Data> & {
   iterator: GoGenerator<Data>;
 };
@@ -100,22 +93,16 @@ interface Producers<Data> {
 }
 
 interface State {
-  /**
-   * map of active channels
-   */
+  /** Map of active channels */
   channels: { [id: string]: true };
 
   dataProducers: Producers<any>;
   dataConsumers: Consumers<any>;
 
-  /**
-   * map of last selected channels
-   */
+  /** Map of last selected channels */
   lastSelected: { [id: string]: number };
 
-  /**
-   * array of range requests
-   */
+  /** Array of range requests */
   rangeRequests?: [];
 }
 
@@ -137,9 +124,8 @@ const closeError = new Error("Channel already closed");
 const dummyIterator = function* () {};
 
 /**
- * Does what it says. Need to take into account the case when the
- * consumer is a pending select, pending take. `select`s have a
- * different signature.
+ * Does what it says. Need to take into account the case when the consumer is a
+ * pending select, pending take. `select`s have a different signature.
  */
 function _createConsumerMessage<Data, Message>(
   consumer: Consumer<Data>,
@@ -412,7 +398,15 @@ function scheduler<Data>({
   }
 }
 
-export function go<Data>(generator: () => GoGenerator<Data>) {
+type InferData<DataOrChannel> = DataOrChannel extends Channel<infer Data>
+  ? Data
+  : DataOrChannel;
+
+export function go<DataOrChannel>(
+  generator: () => DataOrChannel extends Channel<infer Data>
+    ? GoGenerator<Data>
+    : GoGenerator<any>
+) {
   const iterator = checkGenerator(generator);
   iterator.__goId = uuid();
 
@@ -473,9 +467,7 @@ export function newChannel<Data = string>() {
   return channel;
 }
 
-/**
- * Kill the channel
- */
+/** Kill the channel */
 export function close<Data>(channel: Channel<Data>): void {
   const { channels, dataProducers, dataConsumers } = state;
   const chanId = channel._id;
@@ -560,9 +552,7 @@ export function select<Data1, Data2, Data3, Data4, Data5>(
   ]
 ): ChannelSelectRequest;
 
-/**
- * Allows you to yield for the values of the selected channels.
- */
+/** Allows you to yield for the values of the selected channels. */
 export function select(...channels: Channel<any>[]): ChannelSelectRequest {
   return {
     type: "select",
@@ -570,9 +560,7 @@ export function select(...channels: Channel<any>[]): ChannelSelectRequest {
   };
 }
 
-/**
- * forEach will be called each time someone `put`s to the Channel.
- */
+/** ForEach will be called each time someone `put`s to the Channel. */
 export function range<Data>(channel: Channel<Data>) {
   return {
     // This actually registers the callback

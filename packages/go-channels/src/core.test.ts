@@ -7,11 +7,11 @@ const tick = async (timeoutCounts = 5) => {
 };
 
 test("go needs a generator", () => {
-  // @ts-ignore
-  expect(() => go<string>("25")).toThrowError(/Need a generator/i);
+  // @ts-expect-error
+  expect(() => go("25")).toThrowError(/Need a generator/i);
   expect(() =>
-    // @ts-ignore
-    go<string>(function () {
+    // @ts-expect-error
+    go(function () {
       return 35;
     })
   ).toThrowError(/Need an iterator/i);
@@ -24,11 +24,11 @@ test("basic go usage", async () => {
   expect.assertions(1);
   const ch = newChannel();
 
-  go<string>(function* () {
+  go(function* () {
     yield ch.put("hello");
   });
 
-  go<string>(function* () {
+  go<typeof ch>(function* () {
     const { value: msg } = yield ch.take();
     expect(msg).toEqual("hello");
   });
@@ -40,12 +40,12 @@ test("go with multiple puts", async () => {
   expect.assertions(2);
   const ch = newChannel();
 
-  go<string>(function* () {
+  go(function* () {
     yield ch.put("hello");
     yield ch.put("world");
   });
 
-  go<string>(function* () {
+  go<typeof ch>(function* () {
     const { value: msg1 } = yield ch.take();
     expect(msg1).toEqual("hello");
     const { value: msg2 } = yield ch.take();
@@ -60,17 +60,21 @@ test("go with two channels", async () => {
   const ch1 = newChannel();
   const ch2 = newChannel();
 
-  go<string>(function* () {
+  go(function* () {
     yield ch1.put("hello");
-  });
-  go<string>(function* () {
-    yield ch2.put("world");
   });
 
   go(function* () {
-    const { value: msg1 } = yield ch1.take();
+    yield ch2.put("world");
+  });
+
+  type C1 = InferResult<typeof ch1>;
+  type C2 = InferResult<typeof ch2>;
+
+  go(function* () {
+    const { value: msg1 }: C1 = yield ch1.take();
     expect(msg1).toEqual("hello");
-    const { value: msg2 } = yield ch2.take();
+    const { value: msg2 }: C2 = yield ch2.take();
     expect(msg2).toEqual("world");
   });
 
@@ -81,17 +85,17 @@ test("go with multiple puts and delayed takes", async () => {
   expect.assertions(2);
   const ch = newChannel();
 
-  go<string>(function* () {
+  go(function* () {
     yield ch.put("hello");
   });
-  go<string>(function* () {
+  go(function* () {
     yield ch.put("world");
   });
-  go<string>(function* () {
+  go<typeof ch>(function* () {
     const { value: msg1 } = yield ch.take();
     expect(msg1).toEqual("hello");
   });
-  go<string>(function* () {
+  go<typeof ch>(function* () {
     const { value: msg2 } = yield ch.take();
     expect(msg2).toEqual("world");
   });
@@ -106,11 +110,11 @@ test("asyncPut works", async () => {
 
   ch.asyncPut("before");
 
-  go<string>(function* () {
+  go<typeof ch>(function* () {
     const { value: msg } = yield ch.take();
     expect(msg).toEqual("before");
   });
-  go<string>(function* () {
+  go<typeof ch2>(function* () {
     const { value: msg } = yield ch2.take();
     expect(msg).toEqual("after");
   });
@@ -127,11 +131,11 @@ test("putting a pending take works", async () => {
   expect.assertions(1);
   const c1 = newChannel();
 
-  go<string>(function* () {
+  go<typeof c1>(function* () {
     const val = yield c1.take();
     expect(val).toEqual({ value: "hi", done: false });
   });
-  go<string>(function* () {
+  go(function* () {
     yield c1.put("hi");
   });
 
@@ -142,13 +146,13 @@ test("put on a pending select works", async () => {
   expect.assertions(2);
   const c1 = newChannel();
 
-  go<undefined>(function* () {
+  go(function* () {
     type C1 = InferResult<typeof c1>;
     const [val1]: [C1] = yield select(c1);
     expect(typeof val1).not.toBe("undefined");
     expect(val1).toEqual({ value: "hi", done: false });
   });
-  go<string>(function* () {
+  go(function* () {
     yield c1.put("hi");
   });
 
@@ -159,7 +163,7 @@ test("async putting a pending take works", async () => {
   expect.assertions(1);
   const c1 = newChannel();
 
-  go<string>(function* () {
+  go<typeof c1>(function* () {
     const val = yield c1.take();
     expect(val).toEqual({ value: "hi", done: false });
   });
@@ -172,7 +176,7 @@ test("async put on a pending select works", async () => {
   expect.assertions(2);
   const c1 = newChannel();
 
-  go<undefined>(function* () {
+  go(function* () {
     type C1 = InferResult<typeof c1>;
     const [val1]: [C1] = yield select(c1);
     expect(typeof val1).not.toBe("undefined");
@@ -190,7 +194,7 @@ test("close should work", async () => {
   expect.assertions(6);
   const chan = newChannel<string>();
 
-  go<string>(function* () {
+  go<typeof chan>(function* () {
     const { value: val1, done: done1 } = yield chan.take();
     expect(done1).toEqual(false);
     expect(val1).toEqual("hi");
@@ -202,7 +206,7 @@ test("close should work", async () => {
     expect(val3).toEqual(undefined);
   });
 
-  go<string>(function* () {
+  go<typeof chan>(function* () {
     yield chan.put("hi");
     yield chan.put("good");
     close(chan);
@@ -215,7 +219,7 @@ test("close should work with repl example", async () => {
   expect.assertions(2);
   const ch = newChannel();
 
-  go<string>(function* () {
+  go<typeof ch>(function* () {
     const { value, done } = yield ch.take();
     expect(value).toBeUndefined();
     expect(done).toBeTruthy();
@@ -230,7 +234,7 @@ test("pending producers throw error on close", async () => {
   const ch = newChannel();
   let err: Error | undefined;
 
-  go<string>(function* () {
+  go<typeof ch>(function* () {
     try {
       yield ch.put("it's pending until someone takes");
     } catch (e) {
@@ -265,7 +269,7 @@ test("closing twice inside a subroutine throws an error", async () => {
   const chan = newChannel();
   let err: Error | undefined;
 
-  go<string>(function* () {
+  go(function* () {
     try {
       close(chan);
       close(chan);
@@ -285,7 +289,7 @@ test("putting on a closed channel throws an error", async () => {
 
   close(chan);
 
-  go<string>(function* () {
+  go(function* () {
     try {
       yield chan.put("something");
     } catch (e) {
@@ -304,7 +308,7 @@ test("async putting on a closed channel throws error", async () => {
 
   close(chan);
 
-  go<string>(function* () {
+  go(function* () {
     try {
       chan.asyncPut("something");
     } catch (e) {
@@ -337,11 +341,11 @@ test("close works with select", async () => {
   const c2 = newChannel();
   close(c1);
 
-  go<string>(function* () {
+  go(function* () {
     yield c2.put("two");
   });
 
-  go<undefined>(function* () {
+  go(function* () {
     for (let i = 1; i <= 2; i++) {
       const [val1, val2] = yield select(c1, c2);
       if (typeof val1 !== "undefined") {
@@ -361,7 +365,7 @@ test("closing a pending take works", async () => {
   expect.assertions(1);
   const c1 = newChannel();
 
-  go<string>(function* () {
+  go<typeof c1>(function* () {
     const val = yield c1.take();
     expect(val).toEqual({ value: undefined, done: true });
   });
@@ -376,7 +380,7 @@ test("closing a pending select works", async () => {
   const c1 = newChannel();
   type C1 = InferResult<typeof c1>;
 
-  go<undefined>(function* () {
+  go(function* () {
     const [val1]: [C1] = yield select(c1);
     expect(typeof val1).not.toBe("undefined");
     expect(val1).toEqual({ value: undefined, done: true });
@@ -395,11 +399,11 @@ describe("misc", () => {
     expect.assertions(1);
     const c1 = newChannel();
 
-    go<string>(function* () {
+    go(function* () {
       setTimeout(() => c1.asyncPut("one"), 100);
     });
 
-    go<string>(function* () {
+    go(function* () {
       const { value: msg } = yield c1.take();
       expect(msg).toEqual("one");
     });
@@ -418,12 +422,12 @@ describe("select", () => {
     type C1 = InferResult<typeof c1>;
     type C2 = InferResult<typeof c2>;
 
-    go<string>(function* () {
+    go(function* () {
       yield c1.put("one");
       yield c2.put("two");
     });
 
-    go<undefined>(function* () {
+    go(function* () {
       for (let i = 1; i <= 2; i++) {
         const [val1, val2]: [C1, C2] = yield select(c1, c2);
         if (typeof val1 !== "undefined") {
@@ -442,14 +446,14 @@ describe("select", () => {
     const c1 = newChannel();
     const c2 = newChannel();
 
-    go<string>(function* () {
+    go(function* () {
       yield c1.put("one");
     });
-    go<string>(function* () {
+    go(function* () {
       yield c2.put("two");
     });
 
-    go<undefined>(function* () {
+    go(function* () {
       for (let i = 1; i <= 2; i++) {
         type C1 = InferResult<typeof c1>;
         type C2 = InferResult<typeof c1>;
@@ -472,7 +476,7 @@ describe("select", () => {
     close(c1);
     close(c2);
 
-    go<undefined>(function* () {
+    go(function* () {
       type C1 = InferResult<typeof c1>;
       type C2 = InferResult<typeof c1>;
 
@@ -499,7 +503,7 @@ describe("select", () => {
     type C1 = InferResult<typeof c1>;
     type C2 = InferResult<typeof c1>;
 
-    go<undefined>(function* () {
+    go(function* () {
       yield c1.take();
       yield c2.take();
       // wait for the close to happen
@@ -507,7 +511,7 @@ describe("select", () => {
       expect(val1).toEqual({ value: undefined, done: true });
     });
 
-    go<undefined>(function* () {
+    go(function* () {
       yield c1.take();
       yield c2.take();
       // wait for the close to happen
@@ -531,7 +535,7 @@ describe("range", () => {
     const c1 = newChannel();
     let i = 0;
 
-    go<string>(function* () {
+    go(function* () {
       yield c1.put("hello");
     });
 
@@ -546,7 +550,7 @@ describe("range", () => {
       i++;
     });
 
-    go<string>(function* () {
+    go(function* () {
       yield c1.put("goodbye");
       close(c1);
     });
@@ -559,7 +563,7 @@ describe("range", () => {
     const c1 = newChannel();
     let i = 0;
 
-    go<string>(function* () {
+    go(function* () {
       yield c1.put("hello");
     });
 
@@ -572,7 +576,7 @@ describe("range", () => {
       throw new Error("should not be here");
     });
 
-    go<string>(function* () {
+    go(function* () {
       yield c1.put("goodbye");
       close(c1);
     });

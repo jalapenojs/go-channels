@@ -42,5 +42,7 @@
     "node": "18.9.0",
     "yarn": "1.19.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "prettier-plugin-jsdoc": "^0.4.2"
+  }
 }
