@@ -1,12 +1,12 @@
 import { LinkedListBuffer, uuid, checkGenerator } from "./utils";
 
-interface ChannelTakeRequest {
+interface ChannelTakeRequest<Data> {
   chanId: string;
   type: "take";
   payload: undefined;
 }
 
-interface ChannelPutRequest<Data> {
+export interface ChannelPutRequest<Data> {
   chanId: string;
   type: "put";
   payload: { msg: Data };
@@ -21,41 +21,66 @@ interface ChannelSelectRequest {
 }
 
 type ChannelYieldRequest<Data> =
-  | ChannelTakeRequest
+  | ChannelTakeRequest<Data>
   | ChannelPutRequest<Data>
   | ChannelSelectRequest;
 
 interface Channel<Data> {
   readonly _id: string;
 
-  take(): ChannelTakeRequest;
+  take(): ChannelTakeRequest<Data>;
 
   put(msg: Data): ChannelPutRequest<Data>;
 
   asyncPut(msg: Data): void;
 }
 
-/**
- * What goes into the "next" value of the iterator
- */
-type GoNextGenerator<Data> = IteratorResult<Data, Data>;
+export type InferResult<channel> = channel extends Channel<infer Data>
+  ? IteratorResult<Data, Data>
+  : never;
 
-type GoGenerator<Data> = Generator<
-  ChannelYieldRequest<Data>, // yield result
-  void, // return type
-  any // TODO next arguments
-> & { __goId?: string };
-
-type GoIterator<Data> = Iterator<
-  ChannelYieldRequest<Data>, // yield result
-  void, // return type
-  any // TODO next arguments
+export type GoGenerator<Data> = Generator<
+  /**
+   * What the generator yields to the outside.
+   * To clarify, this payload will be available to the internal scheduler.
+   *
+   * Ex:
+   *
+   * ```
+   * function* () {
+   *  const msg: ChannelYieldRequest<Data> = // ...
+   *  yield msg;
+   * }
+   * ```
+   */
+  ChannelYieldRequest<Data>,
+  /**
+   * What the generator returns when it ends.
+   */
+  void,
+  /**
+   * What is yielded inside the generator. Unfortunately,
+   * you'll need to manually type these using go GoYieldResult.
+   * This is a limitation of generators. See
+   * https://tech.lalilo.com/redux-saga-and-typescript-doing-it-right
+   *
+   * Ex:
+   *
+   * ```
+   * function* () {
+   *   // by default it's any
+   *   const x : any = yield;
+   *   const y : boolean = yield;
+   * }
+   * ```
+   */
+  Data extends undefined ? any : IteratorResult<Data, Data>
 > & { __goId?: string };
 
 /**
  * "consumers" are generators that "take"/"select" from the channel
  */
-type Consumer<Data> = (ChannelTakeRequest | ChannelSelectRequest) & {
+type Consumer<Data> = (ChannelTakeRequest<Data> | ChannelSelectRequest) & {
   iterator: GoGenerator<Data>;
 };
 
@@ -509,26 +534,21 @@ export function close<Data>(channel: Channel<Data>): void {
   delete dataProducers[chanId];
 }
 
-interface Selection {
-  type: "select";
-  payload: {
-    selectedChanIds: string[];
-  };
-}
-
-export function select<Data1>(...channel: [Channel<Data1>]): Selection;
+export function select<Data1>(
+  ...channel: [Channel<Data1>]
+): ChannelSelectRequest;
 
 export function select<Data1, Data2>(
   ...channel: [Channel<Data1>, Channel<Data2>]
-): Selection;
+): ChannelSelectRequest;
 
 export function select<Data1, Data2, Data3>(
   ...channel: [Channel<Data1>, Channel<Data2>, Channel<Data3>]
-): Selection;
+): ChannelSelectRequest;
 
 export function select<Data1, Data2, Data3, Data4>(
   ...channel: [Channel<Data1>, Channel<Data2>, Channel<Data3>, Channel<Data4>]
-): Selection;
+): ChannelSelectRequest;
 
 export function select<Data1, Data2, Data3, Data4, Data5>(
   ...channel: [
@@ -538,7 +558,7 @@ export function select<Data1, Data2, Data3, Data4, Data5>(
     Channel<Data4>,
     Channel<Data5>
   ]
-): Selection;
+): ChannelSelectRequest;
 
 /**
  * Allows you to yield for the values of the selected channels.

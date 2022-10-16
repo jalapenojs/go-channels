@@ -1,4 +1,4 @@
-import { newChannel, go, select, close, range } from "./core";
+import { newChannel, go, select, close, range, InferResult } from "./core";
 
 const tick = async (timeoutCounts = 5) => {
   for (let i = 0; i < timeoutCounts; i++) {
@@ -6,10 +6,7 @@ const tick = async (timeoutCounts = 5) => {
   }
 };
 
-const msgFactory = <Data = string>(): Array<{
-  value: Data | undefined;
-  done: boolean;
-}> => [];
+const msgFactory = <Data = string>(): Array<IteratorResult<Data, Data>> => [];
 
 describe("sandbox", () => {
   it("cannot yield on close", async () => {
@@ -27,13 +24,13 @@ describe("sandbox", () => {
     const ch = newChannel();
     const msg = msgFactory();
 
-    go(function* () {
+    go<string>(function* () {
       yield ch.put("hello");
       yield ch.put("world");
       close(ch);
     });
 
-    go(function* () {
+    go<string>(function* () {
       const msg1 = yield ch.take();
       msg.push(msg1);
       const msg2 = yield ch.take();
@@ -56,17 +53,20 @@ describe("sandbox", () => {
     const ch2 = newChannel();
     const msg = msgFactory();
 
-    go(function* () {
+    go<string>(function* () {
       yield ch1.put("hello");
     });
 
-    go(function* () {
+    go<string>(function* () {
       yield ch2.put("world");
     });
 
-    go(function* () {
+    go<undefined>(function* () {
+      type C1 = InferResult<typeof ch1>;
+      type C2 = InferResult<typeof ch2>;
+
       for (;;) {
-        const [msg1, msg2] = yield select(ch1, ch2);
+        const [msg1, msg2]: [C1, C2] = yield select(ch1, ch2);
         if (msg1) {
           msg.push(msg1);
         }
@@ -88,7 +88,7 @@ describe("sandbox", () => {
     const ch = newChannel<number>();
     const msg: number[] = [];
 
-    go(function* () {
+    go<number>(function* () {
       for (let i = 1; i < 10; i++) {
         yield ch.put(i);
       }
@@ -105,5 +105,15 @@ describe("sandbox", () => {
 
     await tick();
     expect(msg).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("range is iterable", () => {
+    const ch = newChannel();
+
+    go<string>(function* () {
+      yield ch.put("hello");
+      yield ch.put("world");
+      yield ch.put("goodbye");
+    });
   });
 });
