@@ -46,7 +46,7 @@ void,
  * Ex:
  *
  *     function* () {
- *        const msg : IteratorResult<Data> = yield ch.take();
+ *        const msg : IteratorResult<Data,Data> = yield ch.take();
  *     }
  *
  * Note:
@@ -55,9 +55,9 @@ void,
  *    IteratorResult<any>. 🤷 This is a limitation of generators. See
  *    https://tech.lalilo.com/redux-saga-and-typescript-doing-it-right
  * 2. In order to get type safety that means you'll need to manually type these.
- * 3. We handle the select case by explicitly returning any
+ * 3. We handle the select case by explicitly casting to `any`
  */
-Data extends Array<infer Any> ? any : IteratorResult<Data, undefined>> & {
+Data extends Array<infer Any> ? any : IteratorResult<Data, Data>> & {
     __goId?: string;
 };
 export declare type InferResult<channel> = channel extends Channel<infer Data> ? IteratorResult<Data, Data> : never;
