@@ -92,9 +92,8 @@ const putCloseError = new Error("Cannot put on a closed channel");
 const closeError = new Error("Channel already closed");
 const dummyIterator = function* () { };
 /**
- * Does what it says. Need to take into account the case when the
- * consumer is a pending select, pending take. `select`s have a
- * different signature.
+ * Does what it says. Need to take into account the case when the consumer is a
+ * pending select, pending take. `select`s have a different signature.
  */
 function _createConsumerMessage(consumer, message, chanId) {
     const { iterator: consumerIterator, type: requestType, payload } = consumer;
@@ -286,12 +285,6 @@ function scheduler({ state: { dataProducers, dataConsumers, channels, lastSelect
             }
             return;
         }
-        case "close":
-            if (!channels[chanId]) {
-                nextTickThrow(iterator, closeError);
-                return;
-            }
-            return nextTick(iterator);
     }
 }
 function go(generator) {
@@ -350,9 +343,7 @@ function newChannel() {
     };
     return channel;
 }
-/**
- * Kill the channel
- */
+/** Kill the channel */
 function close(channel) {
     const { channels, dataProducers, dataConsumers } = state;
     const chanId = channel._id;
@@ -395,24 +386,15 @@ function close(channel) {
         producer = producers === null || producers === void 0 ? void 0 : producers.pop();
     }
     delete dataProducers[chanId];
-    return {
-        chanId,
-        type: "close",
-        payload: undefined,
-    };
 }
-/**
- * Allows you to yield for the values of the selected channels.
- */
+/** Allows you to yield for the values of the selected channels. */
 function select(...channels) {
     return {
         type: "select",
         payload: { selectedChanIds: channels.map((x) => x._id) || [] },
     };
 }
-/**
- * forEach will be called each time someone `put`s to the Channel.
- */
+/** ForEach will be called each time someone `put`s to the Channel. */
 function range(channel) {
     return {
         // This actually registers the callback
