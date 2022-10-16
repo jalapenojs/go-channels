@@ -136,12 +136,18 @@ See
 
 ### Why
 
-The inspiration comes from [redux-saga](https://redux-saga.js.org/) and
-[GoLang Channels](https://golangdocs.com/channels-in-golang)
+To be perfectly honest, at the time (almost 5 years ago), generators seemed
+really cool and GoLang concurrency was way easier than anything I had worked
+back then (including async/await). I resurrected this project because perhaps
+channels can provide an easier mental model for working with asynchronous events
+than React hooks 😄.
 
-Basically, if I'm not mistaken, GoLang Channels are +30 year technology for
-concurrency that provides a simpler mental model than standard concurrency
-patterns. See
+The inspiration comes from
+[GoLang Channels](https://golangdocs.com/channels-in-golang) and
+[redux-saga](https://redux-saga.js.org/).
+
+GoLang Channels are +30 year technology for concurrency that provides a simpler
+mental model than standard concurrency patterns. See
 [the Wikipedia Article](<https://en.wikipedia.org/wiki/Go_(programming_language)#Concurrency:_goroutines_and_channels>)
 for more details.
 
@@ -272,7 +278,7 @@ go(function* () {
 
 ## Roadmap
 
-- An eslint plugin for detect missing `yield`s.
-- `for-of` support for `range`.
 - asynchronous generator support
 - React support 🚀
+- An eslint plugin for detect missing `yield`s.
+- `for-of` support for `range`.
