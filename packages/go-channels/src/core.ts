@@ -6,7 +6,7 @@ interface ChannelTakeRequest {
   payload: undefined;
 }
 
-export interface ChannelPutRequest<Data> {
+interface ChannelPutRequest<Data> {
   chanId: string;
   type: "put";
   payload: { msg: Data };

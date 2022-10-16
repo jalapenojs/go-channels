@@ -1,3 +1,3 @@
-import { select, go, newChannel, close, range } from "./core";
+import { select, go, newChannel, close, range, InferResult } from "./core";
 
-export { select, go, newChannel, close, range };
+export { select, go, newChannel, close, range, InferResult };
