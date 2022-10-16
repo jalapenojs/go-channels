@@ -10,6 +10,8 @@
     "/dist"
   ],
   "scripts": {
+    "readme": "cp ../../README.md README.md",
+    "prepublish": "yarn run readme",
     "test": "vitest",
     "build:clean": "rimraf dist",
     "build:rollup": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
